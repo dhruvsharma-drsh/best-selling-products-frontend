@@ -1,43 +1,52 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { fetchStats } from "@/lib/api";
+import { fetchStats, type PlatformStats } from "@/lib/api";
 import { useAppStore } from "@/lib/store";
 import { motion } from "framer-motion";
 
-const statCards = [
+const statCards: Array<{
+  key: keyof PlatformStats;
+  label: string;
+  render: (stats?: PlatformStats) => string;
+  color: string;
+  icon: string;
+  gradient: string;
+}> = [
   {
     key: "totalProducts",
     label: "Products Tracked",
-    format: (v: number) => v?.toLocaleString() ?? "—",
+    render: (stats) => stats?.totalProducts?.toLocaleString() ?? "-",
     color: "text-white",
-    icon: "📦",
+    icon: "Products",
     gradient: "from-blue-500/10 to-transparent",
   },
   {
     key: "categoriesTracked",
     label: "Categories Monitored",
-    format: (v: number) => String(v ?? "—"),
+    render: (stats) => String(stats?.categoriesTracked ?? "-"),
     color: "text-blue-400",
-    icon: "🗂️",
+    icon: "Categories",
     gradient: "from-indigo-500/10 to-transparent",
   },
   {
     key: "totalSnapshots",
     label: "BSR Snapshots",
-    format: (v: number) =>
-      v ? (v > 1000 ? `${(v / 1000).toFixed(1)}K` : String(v)) : "—",
+    render: (stats) => {
+      const value = stats?.totalSnapshots;
+      return value ? (value > 1000 ? `${(value / 1000).toFixed(1)}K` : String(value)) : "-";
+    },
     color: "text-emerald-400",
-    icon: "📊",
+    icon: "Snapshots",
     gradient: "from-emerald-500/10 to-transparent",
   },
   {
     key: "lastUpdated",
     label: "Last Refresh",
-    format: (v: string | null) =>
-      v ? new Date(v).toLocaleTimeString() : "Never",
+    render: (stats) =>
+      stats?.lastUpdated ? new Date(stats.lastUpdated).toLocaleTimeString() : "Never",
     color: "text-amber-400",
-    icon: "⏱️",
+    icon: "Updated",
     gradient: "from-amber-500/10 to-transparent",
   },
 ];
@@ -51,26 +60,26 @@ export function StatsBar() {
   });
 
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+    <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
       {statCards.map((stat, i) => (
         <motion.div
           key={stat.key}
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: i * 0.08, duration: 0.4 }}
-          className={`glass-card rounded-xl p-4 bg-gradient-to-br ${stat.gradient} group hover:border-white/10 transition-all duration-300`}
+          className={`glass-card group rounded-xl bg-gradient-to-br p-4 transition-all duration-300 hover:border-white/10 ${stat.gradient}`}
         >
-          <div className="flex items-center gap-2 mb-2">
-            <span className="text-sm">{stat.icon}</span>
-            <p className="text-[11px] text-slate-500 uppercase tracking-wider font-medium">
+          <div className="mb-2 flex items-center gap-2">
+            <span className="text-[11px] text-slate-400">{stat.icon}</span>
+            <p className="text-[11px] font-medium uppercase tracking-wider text-slate-500">
               {stat.label}
             </p>
           </div>
           {isLoading ? (
-            <div className="h-8 shimmer rounded w-24" />
+            <div className="shimmer h-8 w-24 rounded" />
           ) : (
-            <p className={`text-2xl font-mono font-semibold ${stat.color}`}>
-              {stat.format((stats as any)?.[stat.key])}
+            <p className={`font-mono text-2xl font-semibold ${stat.color}`}>
+              {stat.render(stats)}
             </p>
           )}
         </motion.div>
