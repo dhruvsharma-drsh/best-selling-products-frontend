@@ -12,6 +12,7 @@ import { ImportPanel } from "@/components/ImportPanel";
 
 import {
   API_BASE,
+  API_BASE_DISPLAY,
   fetchArchiveSnapshots,
   fetchArchiveProducts,
   fetchAvailableArchives,
@@ -257,22 +258,23 @@ export default function HistoryPage() {
                 <p className="text-xs text-slate-400 mb-3">
                   Could not connect to the API server at{" "}
                   <code className="px-1.5 py-0.5 bg-white/[0.06] rounded text-amber-400 text-[11px]">
-                    {API_BASE}
+                    {API_BASE_DISPLAY}
                   </code>
                   .{" "}
-                  {API_BASE.includes("localhost:3001") ? (
+                  {API_BASE ? (
                     <>
-                      Make sure the backend is running:{" "}
+                      Check this health endpoint:{" "}
                       <code className="px-1.5 py-0.5 bg-white/[0.06] rounded text-amber-400 text-[11px]">
-                        cd packages/backend &amp;&amp; npm run dev
+                        {API_BASE}/health
                       </code>
                     </>
                   ) : (
                     <>
-                      Check this health endpoint:{" "}
+                      Set{" "}
                       <code className="px-1.5 py-0.5 bg-white/[0.06] rounded text-amber-400 text-[11px]">
-                        {API_BASE}/api/health
+                        NEXT_PUBLIC_API_URL
                       </code>
+                      {" "}in Vercel and redeploy the frontend.
                     </>
                   )}
                 </p>

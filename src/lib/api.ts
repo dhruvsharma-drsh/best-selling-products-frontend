@@ -1,5 +1,15 @@
 export const API_BASE =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+  process.env.NEXT_PUBLIC_API_URL?.trim().replace(/\/$/, "") ?? "";
+export const API_BASE_DISPLAY =
+  API_BASE || "NEXT_PUBLIC_API_URL is not configured";
+
+function buildApiUrl(path: string): string {
+  if (!API_BASE) {
+    throw new Error("NEXT_PUBLIC_API_URL is not configured");
+  }
+
+  return `${API_BASE}${path.startsWith("/") ? path : `/${path}`}`;
+}
 
 export interface Product {
   rank: number;
@@ -93,7 +103,7 @@ export async function fetchTopProducts(params: {
   if (params.limit) searchParams.set("limit", String(params.limit));
   if (params.search) searchParams.set("search", params.search);
 
-  const res = await fetch(`${API_BASE}/api/products/top?${searchParams}`);
+  const res = await fetch(buildApiUrl(`/api/products/top?${searchParams}`));
   if (!res.ok) throw new Error("Failed to fetch products");
   return res.json();
 }
@@ -102,7 +112,7 @@ export async function fetchProductDetail(
   asin: string,
   country: string = "US"
 ): Promise<ProductDetail> {
-  const res = await fetch(`${API_BASE}/api/products/${asin}?country=${country}`);
+  const res = await fetch(buildApiUrl(`/api/products/${asin}?country=${country}`));
   if (!res.ok) throw new Error("Failed to fetch product detail");
   return res.json();
 }
@@ -116,25 +126,25 @@ export async function fetchStats(
   if (category && category !== "all") params.set("category", category);
 
   const query = params.toString();
-  const res = await fetch(`${API_BASE}/api/stats${query ? `?${query}` : ""}`);
+  const res = await fetch(buildApiUrl(`/api/stats${query ? `?${query}` : ""}`));
   if (!res.ok) throw new Error("Failed to fetch stats");
   return res.json();
 }
 
 export async function fetchCategories(): Promise<CategoryInfo[]> {
-  const res = await fetch(`${API_BASE}/api/categories`);
+  const res = await fetch(buildApiUrl("/api/categories"));
   if (!res.ok) throw new Error("Failed to fetch categories");
   return res.json();
 }
 
 export async function triggerScrapeAll(country: string = "US"): Promise<{ success: boolean; jobIds: string[] }> {
-  const res = await fetch(`${API_BASE}/api/admin/scrape/all?country=${country}`, { method: "POST" });
+  const res = await fetch(buildApiUrl(`/api/admin/scrape/all?country=${country}`), { method: "POST" });
   if (!res.ok) throw new Error("Failed to trigger scrape");
   return res.json();
 }
 
 export async function syncRealTime(category: string, country: string): Promise<{ success: boolean; jobId: string }> {
-  const res = await fetch(`${API_BASE}/api/products/sync`, {
+  const res = await fetch(buildApiUrl("/api/products/sync"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ category, country }),
@@ -146,7 +156,7 @@ export async function syncRealTime(category: string, country: string): Promise<{
 export async function stopRealTimeSync(
   kind: "bulk" | "realtime" = "realtime"
 ): Promise<{ success: boolean; kind: "bulk" | "realtime"; activeJobId: string | null; removedWaitingJobs: number }> {
-  const res = await fetch(`${API_BASE}/api/products/sync/stop`, {
+  const res = await fetch(buildApiUrl("/api/products/sync/stop"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ kind }),
@@ -217,7 +227,7 @@ export async function fetchArchiveSnapshots(
 ): Promise<ArchiveSnapshotDate[]> {
   const params = new URLSearchParams();
   if (category && category !== "all") params.set("category", category);
-  const res = await fetch(`${API_BASE}/api/archive/snapshots?${params}`);
+  const res = await fetch(buildApiUrl(`/api/archive/snapshots?${params}`));
   if (!res.ok) throw new Error("Failed to fetch archive snapshots");
   return res.json();
 }
@@ -232,7 +242,7 @@ export async function fetchArchiveProducts(
   const params = new URLSearchParams({ date, page: String(page), limit: String(limit) });
   if (category && category !== "all") params.set("category", category);
   if (search) params.set("search", search);
-  const res = await fetch(`${API_BASE}/api/archive/products?${params}`);
+  const res = await fetch(buildApiUrl(`/api/archive/products?${params}`));
   if (!res.ok) throw new Error("Failed to fetch archive products");
   return res.json();
 }
@@ -241,7 +251,7 @@ export async function fetchAvailableArchives(
   category: string = "electronics"
 ): Promise<AvailableSnapshot[]> {
   const res = await fetch(
-    `${API_BASE}/api/archive/available?category=${category}&limit=200`
+    buildApiUrl(`/api/archive/available?category=${category}&limit=200`)
   );
   if (!res.ok) throw new Error("Failed to fetch available archives");
   const data: AvailableSnapshotsResponse = await res.json();
@@ -249,7 +259,7 @@ export async function fetchAvailableArchives(
 }
 
 export async function fetchProductTrend(asin: string): Promise<ProductTrend> {
-  const res = await fetch(`${API_BASE}/api/archive/trends/${asin}`);
+  const res = await fetch(buildApiUrl(`/api/archive/trends/${asin}`));
   if (!res.ok) throw new Error("Failed to fetch product trend");
   return res.json();
 }
@@ -259,7 +269,7 @@ export async function triggerArchiveImport(
   category: string,
   date: string
 ): Promise<{ success: boolean; jobId: number }> {
-  const res = await fetch(`${API_BASE}/api/archive/import`, {
+  const res = await fetch(buildApiUrl("/api/archive/import"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ archiveUrl, category, date }),
@@ -272,7 +282,7 @@ export async function triggerBulkArchiveImport(
   category: string,
   snapshots: { archiveUrl: string; date: string }[]
 ): Promise<{ success: boolean; jobIds: number[] }> {
-  const res = await fetch(`${API_BASE}/api/archive/import/bulk`, {
+  const res = await fetch(buildApiUrl("/api/archive/import/bulk"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ category, snapshots }),
@@ -294,7 +304,7 @@ export async function fetchImportStatus(): Promise<
     completedAt: string | null;
   }[]
 > {
-  const res = await fetch(`${API_BASE}/api/archive/import/status`);
+  const res = await fetch(buildApiUrl("/api/archive/import/status"));
   if (!res.ok) throw new Error("Failed to fetch import status");
   return res.json();
 }

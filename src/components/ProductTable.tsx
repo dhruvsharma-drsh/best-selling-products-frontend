@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { API_BASE, fetchTopProducts, Product } from "@/lib/api";
+import { API_BASE_DISPLAY, fetchTopProducts, Product } from "@/lib/api";
 import { useAppStore } from "@/lib/store";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -62,7 +62,7 @@ export function ProductTable() {
         <p className="text-slate-400 text-sm text-center">
           Failed to load products from{" "}
           <code className="rounded bg-white/[0.06] px-1.5 py-0.5 text-[11px] text-amber-400">
-            {API_BASE}
+            {API_BASE_DISPLAY}
           </code>
           .
         </p>
