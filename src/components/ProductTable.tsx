@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { fetchTopProducts, Product } from "@/lib/api";
+import { API_BASE, fetchTopProducts, Product } from "@/lib/api";
 import { useAppStore } from "@/lib/store";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -59,8 +59,12 @@ export function ProductTable() {
     return (
       <div className="flex flex-col items-center justify-center py-20 gap-4">
         <div className="text-4xl">⚠️</div>
-        <p className="text-slate-400 text-sm">
-          Failed to load products. Make sure the backend is running on port 3001.
+        <p className="text-slate-400 text-sm text-center">
+          Failed to load products from{" "}
+          <code className="rounded bg-white/[0.06] px-1.5 py-0.5 text-[11px] text-amber-400">
+            {API_BASE}
+          </code>
+          .
         </p>
       </div>
     );

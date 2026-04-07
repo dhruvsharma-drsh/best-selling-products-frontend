@@ -11,6 +11,7 @@ import { TrendChart } from "@/components/TrendChart";
 import { ImportPanel } from "@/components/ImportPanel";
 
 import {
+  API_BASE,
   fetchArchiveSnapshots,
   fetchArchiveProducts,
   fetchAvailableArchives,
@@ -254,11 +255,26 @@ export default function HistoryPage() {
                   Backend Connection Failed
                 </p>
                 <p className="text-xs text-slate-400 mb-3">
-                  Could not connect to the API server at port 3001. Make sure the
-                  backend is running:{" "}
+                  Could not connect to the API server at{" "}
                   <code className="px-1.5 py-0.5 bg-white/[0.06] rounded text-amber-400 text-[11px]">
-                    cd packages/backend &amp;&amp; npm run dev
+                    {API_BASE}
                   </code>
+                  .{" "}
+                  {API_BASE.includes("localhost:3001") ? (
+                    <>
+                      Make sure the backend is running:{" "}
+                      <code className="px-1.5 py-0.5 bg-white/[0.06] rounded text-amber-400 text-[11px]">
+                        cd packages/backend &amp;&amp; npm run dev
+                      </code>
+                    </>
+                  ) : (
+                    <>
+                      Check this health endpoint:{" "}
+                      <code className="px-1.5 py-0.5 bg-white/[0.06] rounded text-amber-400 text-[11px]">
+                        {API_BASE}/api/health
+                      </code>
+                    </>
+                  )}
                 </p>
                 <button
                   onClick={() => refetchSnapshots()}
