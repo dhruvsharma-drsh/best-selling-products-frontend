@@ -1,15 +1,18 @@
-export const API_BASE =
-  process.env.NEXT_PUBLIC_API_URL?.trim().replace(/\/$/, "") ?? "";
-export const API_BASE_DISPLAY =
-  API_BASE || "NEXT_PUBLIC_API_URL is not configured";
+/**
+ * API Client — All data-fetching functions for the platform.
+ *
+ * Consumes the centralized api-config layer for URL resolution,
+ * timeout handling, and automatic online → local fallback.
+ *
+ * No hardcoded URLs — everything is driven by environment variables.
+ */
 
-function buildApiUrl(path: string): string {
-  if (!API_BASE) {
-    throw new Error("NEXT_PUBLIC_API_URL is not configured");
-  }
+import { apiFetch, getApiBaseDisplay } from "./api-config";
 
-  return `${API_BASE}${path.startsWith("/") ? path : `/${path}`}`;
-}
+// Re-export for backward compatibility (used by ProductTable error state)
+export const API_BASE_DISPLAY = getApiBaseDisplay();
+
+// ─── Types ──────────────────────────────────────────────────────
 
 export interface Product {
   rank: number;
@@ -23,7 +26,9 @@ export interface Product {
   bsrCategory: number;
   estimatedMonthlySales?: number;
   estimatedMonthlyRevenue?: number;
+  priceLocal?: number;
   priceUsd?: number;
+  priceCurrency?: { code: string; symbol: string };
   rating?: number;
   reviewCount?: number;
   lastUpdated?: string;
@@ -37,7 +42,9 @@ export interface ProductDetail {
     imageUrl?: string;
     productUrl: string;
     category: string;
+    priceLocal?: number;
     priceUsd?: number;
+    priceCurrency?: { code: string; symbol: string };
   };
   analytics: {
     currentBsr?: number;
@@ -82,6 +89,8 @@ export interface PaginatedResponse<T> {
   };
 }
 
+// ─── Core API Functions ─────────────────────────────────────────
+
 export async function fetchTopProducts(params: {
   country?: string;
   startDate?: string | null;
@@ -103,8 +112,7 @@ export async function fetchTopProducts(params: {
   if (params.limit) searchParams.set("limit", String(params.limit));
   if (params.search) searchParams.set("search", params.search);
 
-  const res = await fetch(buildApiUrl(`/api/products/top?${searchParams}`));
-  if (!res.ok) throw new Error("Failed to fetch products");
+  const res = await apiFetch(`/api/products/top?${searchParams}`);
   return res.json();
 }
 
@@ -112,8 +120,7 @@ export async function fetchProductDetail(
   asin: string,
   country: string = "US"
 ): Promise<ProductDetail> {
-  const res = await fetch(buildApiUrl(`/api/products/${asin}?country=${country}`));
-  if (!res.ok) throw new Error("Failed to fetch product detail");
+  const res = await apiFetch(`/api/products/${asin}?country=${country}`);
   return res.json();
 }
 
@@ -126,46 +133,41 @@ export async function fetchStats(
   if (category && category !== "all") params.set("category", category);
 
   const query = params.toString();
-  const res = await fetch(buildApiUrl(`/api/stats${query ? `?${query}` : ""}`));
-  if (!res.ok) throw new Error("Failed to fetch stats");
+  const res = await apiFetch(`/api/stats${query ? `?${query}` : ""}`);
   return res.json();
 }
 
 export async function fetchCategories(): Promise<CategoryInfo[]> {
-  const res = await fetch(buildApiUrl("/api/categories"));
-  if (!res.ok) throw new Error("Failed to fetch categories");
+  const res = await apiFetch("/api/categories");
   return res.json();
 }
 
 export async function triggerScrapeAll(country: string = "US"): Promise<{ success: boolean; jobIds: string[] }> {
-  const res = await fetch(buildApiUrl(`/api/admin/scrape/all?country=${country}`), { method: "POST" });
-  if (!res.ok) throw new Error("Failed to trigger scrape");
+  const res = await apiFetch(`/api/admin/scrape/all?country=${country}`, { method: "POST" });
   return res.json();
 }
 
 export async function syncRealTime(category: string, country: string): Promise<{ success: boolean; jobId: string }> {
-  const res = await fetch(buildApiUrl("/api/products/sync"), {
+  const res = await apiFetch("/api/products/sync", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ category, country }),
   });
-  if (!res.ok) throw new Error("Failed to trigger sync");
   return res.json();
 }
 
 export async function stopRealTimeSync(
   kind: "bulk" | "realtime" = "realtime"
 ): Promise<{ success: boolean; kind: "bulk" | "realtime"; activeJobId: string | null; removedWaitingJobs: number }> {
-  const res = await fetch(buildApiUrl("/api/products/sync/stop"), {
+  const res = await apiFetch("/api/products/sync/stop", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ kind }),
   });
-  if (!res.ok) throw new Error("Failed to stop sync");
   return res.json();
 }
 
-// ─── Archive / Wayback Machine API ───
+// ─── Archive / Wayback Machine API ──────────────────────────────
 
 export interface ArchiveSnapshotDate {
   date: string;
@@ -227,8 +229,7 @@ export async function fetchArchiveSnapshots(
 ): Promise<ArchiveSnapshotDate[]> {
   const params = new URLSearchParams();
   if (category && category !== "all") params.set("category", category);
-  const res = await fetch(buildApiUrl(`/api/archive/snapshots?${params}`));
-  if (!res.ok) throw new Error("Failed to fetch archive snapshots");
+  const res = await apiFetch(`/api/archive/snapshots?${params}`);
   return res.json();
 }
 
@@ -242,25 +243,22 @@ export async function fetchArchiveProducts(
   const params = new URLSearchParams({ date, page: String(page), limit: String(limit) });
   if (category && category !== "all") params.set("category", category);
   if (search) params.set("search", search);
-  const res = await fetch(buildApiUrl(`/api/archive/products?${params}`));
-  if (!res.ok) throw new Error("Failed to fetch archive products");
+  const res = await apiFetch(`/api/archive/products?${params}`);
   return res.json();
 }
 
 export async function fetchAvailableArchives(
   category: string = "electronics"
 ): Promise<AvailableSnapshot[]> {
-  const res = await fetch(
-    buildApiUrl(`/api/archive/available?category=${category}&limit=200`)
+  const res = await apiFetch(
+    `/api/archive/available?category=${category}&limit=200`
   );
-  if (!res.ok) throw new Error("Failed to fetch available archives");
   const data: AvailableSnapshotsResponse = await res.json();
   return data.snapshots;
 }
 
 export async function fetchProductTrend(asin: string): Promise<ProductTrend> {
-  const res = await fetch(buildApiUrl(`/api/archive/trends/${asin}`));
-  if (!res.ok) throw new Error("Failed to fetch product trend");
+  const res = await apiFetch(`/api/archive/trends/${asin}`);
   return res.json();
 }
 
@@ -269,12 +267,11 @@ export async function triggerArchiveImport(
   category: string,
   date: string
 ): Promise<{ success: boolean; jobId: number }> {
-  const res = await fetch(buildApiUrl("/api/archive/import"), {
+  const res = await apiFetch("/api/archive/import", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ archiveUrl, category, date }),
   });
-  if (!res.ok) throw new Error("Failed to trigger archive import");
   return res.json();
 }
 
@@ -282,12 +279,11 @@ export async function triggerBulkArchiveImport(
   category: string,
   snapshots: { archiveUrl: string; date: string }[]
 ): Promise<{ success: boolean; jobIds: number[] }> {
-  const res = await fetch(buildApiUrl("/api/archive/import/bulk"), {
+  const res = await apiFetch("/api/archive/import/bulk", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ category, snapshots }),
   });
-  if (!res.ok) throw new Error("Failed to trigger bulk import");
   return res.json();
 }
 
@@ -304,7 +300,6 @@ export async function fetchImportStatus(): Promise<
     completedAt: string | null;
   }[]
 > {
-  const res = await fetch(buildApiUrl("/api/archive/import/status"));
-  if (!res.ok) throw new Error("Failed to fetch import status");
+  const res = await apiFetch("/api/archive/import/status");
   return res.json();
 }

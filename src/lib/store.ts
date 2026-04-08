@@ -1,5 +1,13 @@
 import { create } from "zustand";
 
+export type SyncKind = "bulk" | "realtime";
+
+export interface ActiveSyncTarget {
+  country: string;
+  category: string;
+  kind: SyncKind;
+}
+
 interface AppState {
   country: string;
   startDate: string | null;
@@ -10,6 +18,7 @@ interface AppState {
   drawerOpen: boolean;
   searchQuery: string;
   isSyncing: boolean;
+  activeSyncTarget: ActiveSyncTarget | null;
 
   setCountry: (country: string) => void;
   setDateRange: (startDate: string | null, endDate: string | null) => void;
@@ -19,6 +28,7 @@ interface AppState {
   closeDrawer: () => void;
   setSearchQuery: (q: string) => void;
   setIsSyncing: (isSyncing: boolean) => void;
+  setActiveSyncTarget: (target: ActiveSyncTarget | null) => void;
 }
 
 export const useAppStore = create<AppState>((set) => ({
@@ -31,6 +41,7 @@ export const useAppStore = create<AppState>((set) => ({
   drawerOpen: false,
   searchQuery: "",
   isSyncing: false,
+  activeSyncTarget: null,
 
   setCountry: (country) => set({ country }),
   setDateRange: (startDate, endDate) => set({ startDate, endDate }),
@@ -40,4 +51,5 @@ export const useAppStore = create<AppState>((set) => ({
   closeDrawer: () => set({ drawerOpen: false, selectedAsin: null }),
   setSearchQuery: (searchQuery) => set({ searchQuery }),
   setIsSyncing: (isSyncing) => set({ isSyncing }),
+  setActiveSyncTarget: (activeSyncTarget) => set({ activeSyncTarget }),
 }));

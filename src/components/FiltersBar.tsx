@@ -16,6 +16,7 @@ const COUNTRIES = [
   { value: "IN", label: "India" },
   { value: "JP", label: "Japan" },
   { value: "AU", label: "Australia" },
+  { value: "AE", label: "UAE" },
 ];
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -24,7 +25,7 @@ const CATEGORY_LABELS: Record<string, string> = {
   beauty: "Beauty & Personal Care",
   toys: "Toys & Games",
   sports: "Sports & Outdoors",
-  clothing: "Clothing, Shoes & Jewelry",
+  clothing: "Clothing, Shoes & Accessories",
   health: "Health & Household",
   home: "Home & Kitchen",
   books: "Books",
@@ -38,12 +39,29 @@ const CATEGORY_LABELS: Record<string, string> = {
 };
 
 export function FiltersBar() {
-  const { country, setCountry, startDate, endDate, setDateRange, category, isSyncing, setIsSyncing } = useAppStore();
+  const {
+    country,
+    setCountry,
+    startDate,
+    endDate,
+    setDateRange,
+    category,
+    isSyncing,
+    activeSyncTarget,
+    setIsSyncing,
+    setActiveSyncTarget,
+  } = useAppStore();
   const [localStart, setLocalStart] = useState(startDate || "");
   const [localEnd, setLocalEnd] = useState(endDate || "");
   const [syncMessage, setSyncMessage] = useState<string | null>(null);
   const [pollCount, setPollCount] = useState(0);
   const queryClient = useQueryClient();
+
+  const selectionCoveredByActiveSync =
+    isSyncing &&
+    !!activeSyncTarget &&
+    activeSyncTarget.country === country &&
+    (activeSyncTarget.kind === "bulk" || activeSyncTarget.category === category);
 
   const handleApplyDates = () => {
     setDateRange(localStart || null, localEnd || null);
@@ -77,25 +95,36 @@ export function FiltersBar() {
   useEffect(() => {
     if (pollCount >= 24 && isSyncing) {
       setIsSyncing(false);
+      setActiveSyncTarget(null);
       setSyncMessage(null);
     }
-  }, [pollCount, isSyncing, setIsSyncing]);
+  }, [pollCount, isSyncing, setActiveSyncTarget, setIsSyncing]);
 
   const handleSync = async () => {
-    setIsSyncing(true);
     setSyncMessage(null);
+    const nextKind = !category || category === "all" ? "bulk" : "realtime";
+    const hadActiveSync = isSyncing;
+
     try {
       if (!category || category === "all") {
         const { triggerScrapeAll } = await import('@/lib/api');
         await triggerScrapeAll(country);
+        setIsSyncing(true);
+        setActiveSyncTarget({ country, category: "all", kind: nextKind });
+        setPollCount(0);
         setSyncMessage(`Syncing all categories for ${COUNTRIES.find(c => c.value === country)?.label || country}... Data will auto-refresh.`);
       } else {
         await syncRealTime(category, country);
+        setIsSyncing(true);
+        setActiveSyncTarget({ country, category, kind: nextKind });
+        setPollCount(0);
         const categoryLabel = CATEGORY_LABELS[category] || category;
         setSyncMessage(`Syncing ${categoryLabel} for ${COUNTRIES.find(c => c.value === country)?.label || country}... Data will auto-refresh.`);
       }
     } catch (err) {
-      setIsSyncing(false);
+      if (!hadActiveSync) {
+        setIsSyncing(false);
+      }
       setSyncMessage("Failed to trigger sync. Is the backend running?");
       setTimeout(() => setSyncMessage(null), 5000);
     }
@@ -103,9 +132,10 @@ export function FiltersBar() {
 
   const handleStop = async () => {
     try {
-      const kind = !category || category === "all" ? "bulk" : "realtime";
+      const kind = activeSyncTarget?.kind ?? (!category || category === "all" ? "bulk" : "realtime");
       await stopRealTimeSync(kind);
       setIsSyncing(false);
+      setActiveSyncTarget(null);
       setPollCount(0);
       setSyncMessage("Scrape stopped.");
       queryClient.invalidateQueries({ queryKey: ["products-top"] });
@@ -176,15 +206,15 @@ export function FiltersBar() {
 
         {/* Sync Button */}
         <button
-          onClick={isSyncing ? handleStop : handleSync}
+          onClick={selectionCoveredByActiveSync ? handleStop : handleSync}
           className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all text-white shadow-lg hover:scale-[1.02] ${
-            isSyncing
+            selectionCoveredByActiveSync
               ? "bg-gradient-to-r from-rose-500 to-orange-600 shadow-rose-500/20 hover:shadow-rose-500/40"
               : "bg-gradient-to-r from-blue-500 to-indigo-600 shadow-blue-500/20 hover:shadow-blue-500/40"
           }`}
-          title={isSyncing ? "Stop current scrape" : category === "all" ? "Sync all categories now" : `Sync top 50 products for ${selectedCategoryLabel}`}
+          title={selectionCoveredByActiveSync ? "Stop current scrape" : category === "all" ? "Sync all categories now" : `Sync top 50 products for ${selectedCategoryLabel}`}
         >
-          {isSyncing ? (
+          {selectionCoveredByActiveSync ? (
             <>
               <span className="w-4 h-4 rounded-full border-2 border-white/20 flex items-center justify-center">
                 <span className="w-1.5 h-1.5 bg-white rounded-sm" />
@@ -203,7 +233,7 @@ export function FiltersBar() {
       </div>
 
       {/* Sync Status Banner */}
-      {isSyncing && syncMessage && (
+      {selectionCoveredByActiveSync && syncMessage && (
         <div className="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-blue-500/10 border border-blue-500/20 animate-pulse">
           <div className="flex items-center gap-2">
             <span className="w-3 h-3 border-2 border-blue-400/30 border-t-blue-400 rounded-full animate-spin" />
@@ -216,7 +246,7 @@ export function FiltersBar() {
       )}
 
       {/* Error/Success message when not syncing */}
-      {!isSyncing && syncMessage && (
+      {!selectionCoveredByActiveSync && syncMessage && (
         <div
           className={`flex items-center gap-2 px-4 py-2 rounded-xl border ${
             stoppedOrInfoMessage

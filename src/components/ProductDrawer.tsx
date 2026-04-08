@@ -230,14 +230,19 @@ export function ProductDrawer() {
                       </p>
                     </div>
                   )}
-                  {data.product.priceUsd != null && (
+                  {data.product.priceLocal != null && (
                     <div className="glass-card rounded-lg p-3">
                       <p className="text-[10px] text-slate-600 uppercase">
                         Price
                       </p>
                       <p className="font-mono text-sm text-white mt-0.5">
-                        ${data.product.priceUsd.toFixed(2)}
+                        {data.product.priceCurrency?.symbol || "$"}{data.product.priceLocal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </p>
+                      {country !== "US" && data.product.priceUsd != null && (
+                        <p className="text-[10px] text-slate-500 mt-1">
+                          ≈ ${data.product.priceUsd.toFixed(2)} USD
+                        </p>
+                      )}
                     </div>
                   )}
                   <div className="glass-card rounded-lg p-3">

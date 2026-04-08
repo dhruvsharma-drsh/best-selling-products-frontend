@@ -26,9 +26,25 @@ const CATEGORY_DISPLAY: Record<string, string> = {
 };
 
 export function ProductTable() {
-  const { country, startDate, endDate, category, sortBy, setSortBy, openDrawer, searchQuery, isSyncing } =
-    useAppStore();
+  const {
+    country,
+    startDate,
+    endDate,
+    category,
+    sortBy,
+    setSortBy,
+    openDrawer,
+    searchQuery,
+    isSyncing,
+    activeSyncTarget,
+  } = useAppStore();
   const [page, setPage] = useState(1);
+
+  const selectionCoveredByActiveSync =
+    isSyncing &&
+    !!activeSyncTarget &&
+    activeSyncTarget.country === country &&
+    (activeSyncTarget.kind === "bulk" || activeSyncTarget.category === category);
 
   useEffect(() => {
     setPage(1);
@@ -220,11 +236,20 @@ export function ProductTable() {
                       )}
                     </td>
                     <td className="py-3 px-4 text-right">
-                      <span className="font-mono text-sm text-slate-400">
-                        {product.priceUsd
-                          ? `$${product.priceUsd.toFixed(2)}`
-                          : "—"}
-                      </span>
+                      {product.priceLocal != null ? (
+                        <div className="flex flex-col items-end">
+                          <span className="font-mono text-sm text-slate-300">
+                            {product.priceCurrency?.symbol || "$"}{product.priceLocal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          </span>
+                          {product.country !== "US" && product.priceUsd != null && (
+                            <span className="font-mono text-[10px] text-slate-500">
+                              ~${product.priceUsd.toFixed(2)}
+                            </span>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-slate-700">—</span>
+                      )}
                     </td>
                     <td className="py-3 px-4 text-right">
                       {product.rating ? (
@@ -249,7 +274,7 @@ export function ProductTable() {
       {/* Empty state */}
       {products.length === 0 && !isLoading && (
         <div className="flex flex-col items-center justify-center py-16 gap-3">
-          {isSyncing ? (
+          {selectionCoveredByActiveSync ? (
             <>
               <div className="relative mb-2">
                 <div className="w-16 h-16 rounded-full border-4 border-blue-500/20 border-t-blue-500 animate-spin" />

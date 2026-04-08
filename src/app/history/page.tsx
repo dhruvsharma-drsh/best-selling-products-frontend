@@ -11,8 +11,6 @@ import { TrendChart } from "@/components/TrendChart";
 import { ImportPanel } from "@/components/ImportPanel";
 
 import {
-  API_BASE,
-  API_BASE_DISPLAY,
   fetchArchiveSnapshots,
   fetchArchiveProducts,
   fetchAvailableArchives,
@@ -21,6 +19,7 @@ import {
   triggerBulkArchiveImport,
   type ProductTrend,
 } from "@/lib/api";
+import { getApiBase, getApiBaseDisplay } from "@/lib/api-config";
 
 export default function HistoryPage() {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
@@ -258,14 +257,14 @@ export default function HistoryPage() {
                 <p className="text-xs text-slate-400 mb-3">
                   Could not connect to the API server at{" "}
                   <code className="px-1.5 py-0.5 bg-white/[0.06] rounded text-amber-400 text-[11px]">
-                    {API_BASE_DISPLAY}
+                    {getApiBaseDisplay()}
                   </code>
                   .{" "}
-                  {API_BASE ? (
+                  {getApiBase() ? (
                     <>
                       Check this health endpoint:{" "}
                       <code className="px-1.5 py-0.5 bg-white/[0.06] rounded text-amber-400 text-[11px]">
-                        {API_BASE}/health
+                        {getApiBase()}/health
                       </code>
                     </>
                   ) : (
