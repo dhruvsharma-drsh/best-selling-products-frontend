@@ -19,6 +19,11 @@ interface AppState {
   searchQuery: string;
   isSyncing: boolean;
   activeSyncTarget: ActiveSyncTarget | null;
+  productLimit: number;
+  currentSyncCountry: string | null;
+  currentSyncCategory: string | null;
+  completedSyncCountries: string[];
+  syncIsFetching: boolean;
 
   setCountry: (country: string) => void;
   setDateRange: (startDate: string | null, endDate: string | null) => void;
@@ -29,6 +34,14 @@ interface AppState {
   setSearchQuery: (q: string) => void;
   setIsSyncing: (isSyncing: boolean) => void;
   setActiveSyncTarget: (target: ActiveSyncTarget | null) => void;
+  setProductLimit: (limit: number) => void;
+  setSyncProgressState: (state: {
+    currentCountry: string | null;
+    currentCategory: string | null;
+    completedCountries: string[];
+    isFetching: boolean;
+  }) => void;
+  resetSyncProgressState: () => void;
 }
 
 export const useAppStore = create<AppState>((set) => ({
@@ -42,6 +55,11 @@ export const useAppStore = create<AppState>((set) => ({
   searchQuery: "",
   isSyncing: false,
   activeSyncTarget: null,
+  productLimit: 10,
+  currentSyncCountry: null,
+  currentSyncCategory: null,
+  completedSyncCountries: [],
+  syncIsFetching: false,
 
   setCountry: (country) => set({ country }),
   setDateRange: (startDate, endDate) => set({ startDate, endDate }),
@@ -52,4 +70,19 @@ export const useAppStore = create<AppState>((set) => ({
   setSearchQuery: (searchQuery) => set({ searchQuery }),
   setIsSyncing: (isSyncing) => set({ isSyncing }),
   setActiveSyncTarget: (activeSyncTarget) => set({ activeSyncTarget }),
+  setProductLimit: (productLimit) => set({ productLimit }),
+  setSyncProgressState: ({ currentCountry, currentCategory, completedCountries, isFetching }) =>
+    set({
+      currentSyncCountry: currentCountry,
+      currentSyncCategory: currentCategory,
+      completedSyncCountries: completedCountries,
+      syncIsFetching: isFetching,
+    }),
+  resetSyncProgressState: () =>
+    set({
+      currentSyncCountry: null,
+      currentSyncCategory: null,
+      completedSyncCountries: [],
+      syncIsFetching: false,
+    }),
 }));

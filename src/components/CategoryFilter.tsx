@@ -5,7 +5,27 @@ import { fetchCategories } from "@/lib/api";
 import { useAppStore } from "@/lib/store";
 import { motion } from "framer-motion";
 import { useRef } from "react";
-// hello 
+
+const CATEGORY_ICONS: Record<string, string> = {
+  all: "⚡",
+  electronics: "💻",
+  kitchen: "🍳",
+  beauty: "✨",
+  toys: "🧸",
+  sports: "⚽",
+  clothing: "👕",
+  health: "💊",
+  home: "🏠",
+  books: "📚",
+  grocery: "🛒",
+  office: "🖊️",
+  petSupplies: "🐾",
+  automotive: "🚗",
+  baby: "👶",
+  tools: "🔧",
+  videogames: "🎮",
+};
+
 export function CategoryFilter() {
   const { category, setCategory } = useAppStore();
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -36,7 +56,7 @@ export function CategoryFilter() {
           <button
             key={cat.key}
             onClick={() => setCategory(cat.key)}
-            className={`relative flex-shrink-0 px-3.5 py-1.5 rounded-full text-xs font-medium transition-all duration-200 whitespace-nowrap ${
+            className={`relative flex-shrink-0 px-3.5 py-1.5 rounded-full text-xs font-medium transition-all duration-200 whitespace-nowrap flex items-center gap-1.5 ${
               category === cat.key
                 ? "bg-blue-500/20 text-blue-400 border border-blue-500/30"
                 : "bg-white/[0.04] text-slate-400 border border-white/[0.06] hover:bg-white/[0.08] hover:text-slate-300"
@@ -49,6 +69,9 @@ export function CategoryFilter() {
                 transition={{ type: "spring", stiffness: 400, damping: 30 }}
               />
             )}
+            <span className="relative z-10 text-[11px]">
+              {CATEGORY_ICONS[cat.key] || "📦"}
+            </span>
             <span className="relative z-10">{cat.displayName}</span>
           </button>
         ))}

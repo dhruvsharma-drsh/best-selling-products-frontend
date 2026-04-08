@@ -12,7 +12,7 @@ import Link from "next/link";
 export default function DashboardPage() {
   return (
     <div className="relative min-h-screen">
-      {/* Header */}
+      {/* Header — clean & minimal */}
       <header className="sticky top-0 z-30 border-b border-white/[0.06] bg-[#0f1117]/80 backdrop-blur-xl">
         <div className="max-w-[1440px] mx-auto px-6 py-4">
           <div className="flex items-center justify-between gap-4">
@@ -37,17 +37,20 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            {/* Right side controls */}
+            {/* Right side — search + history */}
             <div className="flex items-center gap-3">
-              <div className="w-64 hidden lg:block">
+              <div className="w-72 hidden lg:block">
                 <SearchBar />
               </div>
-              <FiltersBar />
               <Link
                 href="/history"
-                className="text-xs text-purple-400 hover:text-purple-300 transition-colors px-3 py-1.5 rounded-lg bg-purple-500/10 border border-purple-500/20 hover:border-purple-500/30 hidden md:flex items-center gap-1.5"
+                className="text-xs text-purple-400 hover:text-purple-300 transition-colors px-3 py-2 rounded-xl bg-purple-500/10 border border-purple-500/20 hover:border-purple-500/30 hidden md:flex items-center gap-1.5 font-medium"
               >
-                <span>⏳</span> History
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10" />
+                  <polyline points="12 6 12 12 16 14" />
+                </svg>
+                History
               </Link>
             </div>
           </div>
@@ -63,6 +66,15 @@ export default function DashboardPage() {
 
         {/* Stats */}
         <StatsBar />
+
+        {/* Sync Controls — now properly placed in the content area */}
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15, duration: 0.4 }}
+        >
+          <FiltersBar />
+        </motion.div>
 
         {/* Category Filter */}
         <CategoryFilter />

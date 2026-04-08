@@ -40,11 +40,43 @@ body::before {
   width: 100%;
   height: 100%;
   background-image:
-    linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+    linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
   background-size: 60px 60px;
   pointer-events: none;
   z-index: 0;
+}
+
+/* Ambient floating gradient orbs */
+body::after {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background:
+    radial-gradient(ellipse 600px 600px at 15% 10%, rgba(59, 130, 246, 0.04), transparent),
+    radial-gradient(ellipse 500px 500px at 85% 80%, rgba(16, 185, 129, 0.03), transparent),
+    radial-gradient(ellipse 400px 400px at 50% 50%, rgba(139, 92, 246, 0.02), transparent);
+  pointer-events: none;
+  z-index: 0;
+  animation: ambientDrift 30s ease-in-out infinite alternate;
+}
+
+@keyframes ambientDrift {
+  0% {
+    background:
+      radial-gradient(ellipse 600px 600px at 15% 10%, rgba(59, 130, 246, 0.04), transparent),
+      radial-gradient(ellipse 500px 500px at 85% 80%, rgba(16, 185, 129, 0.03), transparent),
+      radial-gradient(ellipse 400px 400px at 50% 50%, rgba(139, 92, 246, 0.02), transparent);
+  }
+  100% {
+    background:
+      radial-gradient(ellipse 600px 600px at 25% 30%, rgba(59, 130, 246, 0.05), transparent),
+      radial-gradient(ellipse 500px 500px at 75% 60%, rgba(16, 185, 129, 0.04), transparent),
+      radial-gradient(ellipse 400px 400px at 40% 70%, rgba(139, 92, 246, 0.03), transparent);
+  }
 }
 
 /* Mono font for data */
@@ -63,40 +95,42 @@ body::before {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.08);
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.16);
 }
 
 /* Glass card effect */
 .glass-card {
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(255, 255, 255, 0.025);
   border: 1px solid rgba(255, 255, 255, 0.06);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .glass-card:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.045);
   border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
 }
 
 /* Glow effects */
 .glow-blue {
-  box-shadow: 0 0 20px rgba(59, 130, 246, 0.15);
+  box-shadow: 0 0 24px rgba(59, 130, 246, 0.12), 0 0 4px rgba(59, 130, 246, 0.08);
 }
 
 .glow-emerald {
-  box-shadow: 0 0 20px rgba(16, 185, 129, 0.15);
+  box-shadow: 0 0 24px rgba(16, 185, 129, 0.12), 0 0 4px rgba(16, 185, 129, 0.08);
 }
 
 /* Pulse animation for live indicator */
 @keyframes pulse-dot {
   0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.5; transform: scale(0.8); }
+  50% { opacity: 0.4; transform: scale(0.75); }
 }
 
 .animate-pulse-dot {
@@ -165,4 +199,20 @@ tr {
 .pill-inactive:hover {
   background-color: rgba(255, 255, 255, 0.08);
   color: rgb(203, 213, 225);
+}
+
+/* Section divider */
+.section-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.06) 20%, rgba(255, 255, 255, 0.06) 80%, transparent);
+}
+
+/* Control panel glass */
+.control-panel {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 1rem;
+  padding: 1rem 1.25rem;
 }

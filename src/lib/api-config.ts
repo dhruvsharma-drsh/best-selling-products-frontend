@@ -82,14 +82,20 @@ export function buildApiUrl(path: string): string {
  * Once fallback succeeds, subsequent requests continue using fallback
  * until the primary is confirmed reachable again via `checkPrimaryHealth()`.
  */
+export interface ApiFetchOptions {
+  timeoutMs?: number;
+}
+
 export async function apiFetch(
   path: string,
-  init?: RequestInit
+  init?: RequestInit,
+  options?: ApiFetchOptions
 ): Promise<Response> {
   const fullUrl = buildApiUrl(path);
+  const timeoutMs = options?.timeoutMs ?? config.timeoutMs;
 
   try {
-    const res = await fetchWithTimeout(fullUrl, init, config.timeoutMs);
+    const res = await fetchWithTimeout(fullUrl, init, timeoutMs);
     return res;
   } catch (primaryError) {
     // If we're already on fallback, or there's no distinct fallback, re-throw
@@ -112,7 +118,7 @@ export async function apiFetch(
       const res = await fetchWithTimeout(
         fallbackFullUrl,
         init,
-        config.timeoutMs
+        timeoutMs
       );
 
       // Fallback succeeded — switch active URL
@@ -157,6 +163,33 @@ export async function checkPrimaryHealth(): Promise<boolean> {
   return false;
 }
 
+async function createHttpError(res: Response): Promise<Error> {
+  const defaultMessage = `HTTP ${res.status}: ${res.statusText}`;
+  const contentType = res.headers.get("content-type") || "";
+
+  try {
+    if (contentType.includes("application/json")) {
+      const body = (await res.clone().json()) as {
+        message?: string;
+        error?: string;
+      };
+      const detail = body.message || body.error;
+      if (detail) {
+        return new Error(`HTTP ${res.status}: ${detail}`);
+      }
+    } else {
+      const text = (await res.clone().text()).trim();
+      if (text) {
+        return new Error(`HTTP ${res.status}: ${text}`);
+      }
+    }
+  } catch {
+    // Fall back to the status text if the error payload is unreadable.
+  }
+
+  return new Error(defaultMessage);
+}
+
 // ─── Internal Helpers ───────────────────────────────────────────
 
 async function fetchWithTimeout(
@@ -181,7 +214,7 @@ async function fetchWithTimeout(
     });
 
     if (!res.ok) {
-      throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+      throw await createHttpError(res);
     }
 
     return res;

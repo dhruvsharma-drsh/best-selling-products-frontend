@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { API_BASE_DISPLAY, fetchTopProducts, Product } from "@/lib/api";
+import { formatCurrencyAmount } from "@/lib/currency";
 import { useAppStore } from "@/lib/store";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -38,17 +39,37 @@ export function ProductTable() {
     isSyncing,
     activeSyncTarget,
   } = useAppStore();
-  const [page, setPage] = useState(1);
+  const filterKey = [
+    country,
+    startDate ?? "",
+    endDate ?? "",
+    category,
+    searchQuery,
+  ].join("|");
+  const [pagination, setPagination] = useState({
+    filterKey,
+    page: 1,
+  });
+  const page = pagination.filterKey === filterKey ? pagination.page : 1;
 
   const selectionCoveredByActiveSync =
     isSyncing &&
     !!activeSyncTarget &&
-    activeSyncTarget.country === country &&
-    (activeSyncTarget.kind === "bulk" || activeSyncTarget.category === category);
+    (activeSyncTarget.country === "ALL" ||
+      (activeSyncTarget.country === country &&
+        (activeSyncTarget.kind === "bulk" ||
+          activeSyncTarget.category === category)));
 
-  useEffect(() => {
-    setPage(1);
-  }, [country, startDate, endDate, category, searchQuery]);
+  const updatePage = (nextPage: number | ((page: number) => number)) => {
+    setPagination((current) => {
+      const currentPage = current.filterKey === filterKey ? current.page : 1;
+      return {
+        filterKey,
+        page:
+          typeof nextPage === "function" ? nextPage(currentPage) : nextPage,
+      };
+    });
+  };
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ["products-top", country, startDate, endDate, category, sortBy, page, searchQuery],
@@ -68,7 +89,7 @@ export function ProductTable() {
 
   const handleSort = (col: "estimated_sales" | "bsr" | "revenue") => {
     setSortBy(col);
-    setPage(1);
+    updatePage(1);
   };
 
   if (isError) {
@@ -237,16 +258,12 @@ export function ProductTable() {
                     </td>
                     <td className="py-3 px-4 text-right">
                       {product.priceLocal != null ? (
-                        <div className="flex flex-col items-end">
-                          <span className="font-mono text-sm text-slate-300">
-                            {product.priceCurrency?.symbol || "$"}{product.priceLocal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                          </span>
-                          {product.country !== "US" && product.priceUsd != null && (
-                            <span className="font-mono text-[10px] text-slate-500">
-                              ~${product.priceUsd.toFixed(2)}
-                            </span>
+                        <span className="font-mono text-sm text-slate-300">
+                          {formatCurrencyAmount(
+                            product.priceLocal,
+                            product.priceCurrency
                           )}
-                        </div>
+                        </span>
                       ) : (
                         <span className="text-slate-700">—</span>
                       )}
@@ -298,7 +315,7 @@ export function ProductTable() {
                 It looks like there&apos;s no data for this region and category yet.
               </p>
               <div className="text-sm text-slate-400 bg-blue-500/10 text-blue-400/90 px-4 py-2 flex items-center gap-3 rounded-lg border border-blue-500/20">
-                Click <strong>Sync Now</strong> at the top right to start scraping products from Amazon.
+                Click <strong>Sync Now</strong> or <strong>Sync All Countries</strong> at the top right to start scraping products from Amazon.
               </div>
             </>
           )}
@@ -319,7 +336,7 @@ export function ProductTable() {
           </span>
           <div className="flex gap-2">
             <button
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              onClick={() => updatePage((currentPage) => Math.max(1, currentPage - 1))}
               disabled={page === 1}
               className="px-3 py-1.5 rounded-lg bg-white/[0.03] border border-white/[0.06] text-xs disabled:opacity-30 hover:bg-white/[0.06] transition-colors"
             >
@@ -330,7 +347,9 @@ export function ProductTable() {
             </span>
             <button
               onClick={() =>
-                setPage((p) => Math.min(meta.totalPages || 1, p + 1))
+                updatePage((currentPage) =>
+                  Math.min(meta.totalPages || 1, currentPage + 1)
+                )
               }
               disabled={page >= (meta.totalPages || 1)}
               className="px-3 py-1.5 rounded-lg bg-white/[0.03] border border-white/[0.06] text-xs disabled:opacity-30 hover:bg-white/[0.06] transition-colors"
