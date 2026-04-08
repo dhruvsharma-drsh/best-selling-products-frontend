@@ -5,7 +5,7 @@ import { fetchCategories } from "@/lib/api";
 import { useAppStore } from "@/lib/store";
 import { motion } from "framer-motion";
 import { useRef } from "react";
-
+// hello 
 export function CategoryFilter() {
   const { category, setCategory } = useAppStore();
   const scrollRef = useRef<HTMLDivElement>(null);
