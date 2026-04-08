@@ -5,7 +5,7 @@ import { fetchCategories } from "@/lib/api";
 import { useAppStore } from "@/lib/store";
 import { motion } from "framer-motion";
 import { useRef } from "react";
-
+// hi 
 const CATEGORY_ICONS: Record<string, string> = {
   all: "⚡",
   electronics: "💻",

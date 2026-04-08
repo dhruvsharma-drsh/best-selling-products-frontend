@@ -13,7 +13,7 @@ import { apiFetch, getApiBaseDisplay } from "./api-config";
 export const API_BASE_DISPLAY = getApiBaseDisplay();
 
 // ─── Types ──────────────────────────────────────────────────────
-
+// hi
 export interface Product {
   rank: number;
   asin: string;
@@ -32,6 +32,7 @@ export interface Product {
   rating?: number;
   reviewCount?: number;
   lastUpdated?: string;
+  
 }
 
 export interface ProductDetail {
