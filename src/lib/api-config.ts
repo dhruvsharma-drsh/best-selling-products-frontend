@@ -24,6 +24,8 @@ interface ApiConfig {
   activeUrl: string;
   /** Whether we've fallen back to the secondary URL */
   isFallbackActive: boolean;
+  /** Whether the current API base has been health-checked locally */
+  hasValidatedActiveUrl: boolean;
 }
 
 function normalizeUrl(url: string | undefined): string {
@@ -45,7 +47,110 @@ const config: ApiConfig = {
   timeoutMs: TIMEOUT_MS,
   activeUrl: PRIMARY_URL || FALLBACK_URL,
   isFallbackActive: !PRIMARY_URL,
+  hasValidatedActiveUrl: false,
 };
+
+const LOCAL_API_PORTS = ["3001", "3002", "3003"] as const;
+let apiBaseDiscoveryPromise: Promise<string> | null = null;
+
+function isLocalHostname(hostname: string): boolean {
+  return (
+    hostname === "localhost" ||
+    hostname === "127.0.0.1" ||
+    hostname === "0.0.0.0" ||
+    hostname === "[::1]"
+  );
+}
+
+function shouldAutoDiscoverApi(): boolean {
+  return (
+    typeof window !== "undefined" &&
+    isLocalHostname(window.location.hostname)
+  );
+}
+
+function getApiCandidateUrls(): string[] {
+  const candidates = new Set<string>();
+
+  if (config.primaryUrl) candidates.add(config.primaryUrl);
+  if (config.fallbackUrl) candidates.add(config.fallbackUrl);
+
+  if (shouldAutoDiscoverApi()) {
+    const { protocol, hostname, origin } = window.location;
+
+    candidates.add(origin);
+
+    for (const port of LOCAL_API_PORTS) {
+      candidates.add(`${protocol}//${hostname}:${port}`);
+    }
+
+    if (hostname === "localhost") {
+      for (const port of LOCAL_API_PORTS) {
+        candidates.add(`${protocol}//127.0.0.1:${port}`);
+      }
+    }
+  }
+
+  return [...candidates].filter(Boolean);
+}
+
+async function probeApiBase(base: string): Promise<boolean> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 1500);
+
+  try {
+    const res = await fetch(`${base}/api/health`, {
+      method: "GET",
+      signal: controller.signal,
+    });
+
+    if (!res.ok) {
+      return false;
+    }
+
+    const contentType = res.headers.get("content-type") || "";
+    if (!contentType.includes("application/json")) {
+      return false;
+    }
+
+    const body = (await res.json().catch(() => null)) as
+      | { status?: string }
+      | null;
+
+    return body?.status === "ok";
+  } catch {
+    return false;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+async function ensureResolvedApiBase(): Promise<string> {
+  if (config.hasValidatedActiveUrl || !shouldAutoDiscoverApi()) {
+    return config.activeUrl;
+  }
+
+  if (!apiBaseDiscoveryPromise) {
+    apiBaseDiscoveryPromise = (async () => {
+      for (const candidate of getApiCandidateUrls()) {
+        if (await probeApiBase(candidate)) {
+          config.activeUrl = candidate;
+          config.isFallbackActive = candidate === config.fallbackUrl;
+          config.hasValidatedActiveUrl = true;
+          return candidate;
+        }
+      }
+
+      return config.activeUrl;
+    })();
+  }
+
+  try {
+    return await apiBaseDiscoveryPromise;
+  } finally {
+    apiBaseDiscoveryPromise = null;
+  }
+}
 
 // ─── Public Accessors ───────────────────────────────────────────
 
@@ -91,11 +196,13 @@ export async function apiFetch(
   init?: RequestInit,
   options?: ApiFetchOptions
 ): Promise<Response> {
+  await ensureResolvedApiBase();
   const fullUrl = buildApiUrl(path);
   const timeoutMs = options?.timeoutMs ?? config.timeoutMs;
 
   try {
     const res = await fetchWithTimeout(fullUrl, init, timeoutMs);
+    config.hasValidatedActiveUrl = true;
     return res;
   } catch (primaryError) {
     // If we're already on fallback, or there's no distinct fallback, re-throw
@@ -124,9 +231,10 @@ export async function apiFetch(
       // Fallback succeeded — switch active URL
       config.activeUrl = config.fallbackUrl;
       config.isFallbackActive = true;
+      config.hasValidatedActiveUrl = true;
 
       return res;
-    } catch (fallbackError) {
+    } catch {
       // Both failed — throw the original primary error
       throw primaryError;
     }
@@ -144,17 +252,13 @@ export async function checkPrimaryHealth(): Promise<boolean> {
   if (!config.primaryUrl || !config.isFallbackActive) return true;
 
   try {
-    const res = await fetchWithTimeout(
-      `${config.primaryUrl}/api/health`,
-      { method: "GET" },
-      5000
-    );
-    if (res.ok) {
+    if (await probeApiBase(config.primaryUrl)) {
       console.info(
         "[api-config] Primary API recovered — switching back from fallback"
       );
       config.activeUrl = config.primaryUrl;
       config.isFallbackActive = false;
+      config.hasValidatedActiveUrl = true;
       return true;
     }
   } catch {

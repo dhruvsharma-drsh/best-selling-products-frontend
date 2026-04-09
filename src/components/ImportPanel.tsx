@@ -157,10 +157,15 @@ export function ImportPanel({ onDiscover, onImport, onBulkImport }: ImportPanelP
               {/* Category + Discover */}
               <div className="flex gap-3 items-end">
                 <div className="flex-1">
-                  <label className="text-[10px] text-slate-600 uppercase tracking-wider block mb-1.5">
+                  <label
+                    htmlFor="archive-category"
+                    className="text-[10px] text-slate-600 uppercase tracking-wider block mb-1.5"
+                  >
                     Category
                   </label>
                   <select
+                    id="archive-category"
+                    name="archiveCategory"
                     value={category}
                     onChange={(e) => {
                       setCategory(e.target.value);
@@ -249,6 +254,8 @@ export function ImportPanel({ onDiscover, onImport, onBulkImport }: ImportPanelP
                         {/* Checkbox for bulk */}
                         {!snap.alreadyImported && (
                           <input
+                            name={`archiveSnapshot-${snap.timestamp}`}
+                            aria-label={`Select snapshot ${snap.date}`}
                             type="checkbox"
                             checked={selectedForBulk.has(snap.timestamp)}
                             onChange={() => toggleBulkSelect(snap.timestamp)}

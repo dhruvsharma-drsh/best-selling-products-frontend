@@ -28,6 +28,83 @@ interface SparklineProps {
   height?: number;
 }
 
+function getDayKey(time: string): string {
+  const parsed = new Date(time);
+  if (Number.isNaN(parsed.getTime())) return time;
+  return parsed.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+}
+
+function formatTooltipTimestamp(time: string | undefined): string {
+  if (!time) return "";
+  const parsed = new Date(time);
+  if (Number.isNaN(parsed.getTime())) return time;
+
+  return parsed.toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
+function formatShortDay(time: string): string {
+  const parsed = new Date(time);
+  if (Number.isNaN(parsed.getTime())) return time;
+
+  return parsed.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+  });
+}
+
+function formatShortTime(time: string): string {
+  const parsed = new Date(time);
+  if (Number.isNaN(parsed.getTime())) return time;
+
+  return parsed.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
+function buildSparseAxisLabels(data: { time: string }[]): string[] {
+  if (data.length === 0) return [];
+
+  const uniqueDays = Array.from(new Set(data.map((entry) => getDayKey(entry.time))));
+
+  if (uniqueDays.length <= 1) {
+    const desiredLabels = Math.min(6, data.length);
+    const step = desiredLabels > 1
+      ? Math.max(1, Math.floor((data.length - 1) / (desiredLabels - 1)))
+      : 1;
+
+    return data.map((entry, index) => {
+      const isFirst = index === 0;
+      const isLast = index === data.length - 1;
+      const shouldShow = isFirst || isLast || index % step === 0;
+      return shouldShow ? formatShortTime(entry.time) : "";
+    });
+  }
+
+  return data.map((entry, index) => {
+    const currentDay = getDayKey(entry.time);
+    const previousDay = index > 0 ? getDayKey(data[index - 1].time) : null;
+    const isDayChange = currentDay !== previousDay;
+    const isLast = index === data.length - 1;
+
+    if (isDayChange || isLast) {
+      return formatShortDay(entry.time);
+    }
+
+    return "";
+  });
+}
+
 export function BsrSparkline({ data, height = 120 }: SparklineProps) {
   if (!data || data.length === 0) {
     return (
@@ -40,12 +117,7 @@ export function BsrSparkline({ data, height = 120 }: SparklineProps) {
     );
   }
 
-  const labels = data.map((d) =>
-    new Date(d.time).toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-    })
-  );
+  const labels = buildSparseAxisLabels(data);
 
   // Invert: lower BSR = better, so we keep normal axis but note it
   const chartData = {
@@ -75,7 +147,9 @@ export function BsrSparkline({ data, height = 120 }: SparklineProps) {
         ticks: {
           color: "#475569",
           font: { size: 9, family: "DM Mono" },
-          maxTicksLimit: 6,
+          autoSkip: false,
+          maxRotation: 0,
+          minRotation: 0,
         },
         border: { display: false },
       },
@@ -102,6 +176,8 @@ export function BsrSparkline({ data, height = 120 }: SparklineProps) {
         borderColor: "rgba(255,255,255,0.1)",
         borderWidth: 1,
         callbacks: {
+          title: (items: any[]) =>
+            formatTooltipTimestamp(data[items[0]?.dataIndex]?.time),
           label: (ctx: any) => `BSR: #${ctx.raw.toLocaleString()}`,
         },
       },
@@ -137,12 +213,7 @@ export function SalesChart({ data, height = 120 }: SalesChartProps) {
     );
   }
 
-  const labels = data.map((d) =>
-    new Date(d.time).toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-    })
-  );
+  const labels = buildSparseAxisLabels(data);
 
   const chartData = {
     labels,
@@ -168,7 +239,9 @@ export function SalesChart({ data, height = 120 }: SalesChartProps) {
         ticks: {
           color: "#475569",
           font: { size: 9, family: "DM Mono" },
-          maxTicksLimit: 6,
+          autoSkip: false,
+          maxRotation: 0,
+          minRotation: 0,
         },
         border: { display: false },
       },
@@ -191,6 +264,10 @@ export function SalesChart({ data, height = 120 }: SalesChartProps) {
         cornerRadius: 8,
         borderColor: "rgba(255,255,255,0.1)",
         borderWidth: 1,
+        callbacks: {
+          title: (items: any[]) =>
+            formatTooltipTimestamp(data[items[0]?.dataIndex]?.time),
+        },
       },
       legend: { display: false },
     },

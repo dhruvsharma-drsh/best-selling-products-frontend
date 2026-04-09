@@ -12,6 +12,7 @@ export function formatCurrencyAmount(
   if (amount == null || !Number.isFinite(amount)) {
     return "—";
   }
+// hi 
 
   const currencyCode = currency?.code || fallback.code || "USD";
   const locale = currency?.locale || fallback.locale || "en-US";

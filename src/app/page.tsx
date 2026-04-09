@@ -1,52 +1,58 @@
 "use client";
 
-import { StatsBar } from "@/components/StatsBar";
-import { FiltersBar } from "@/components/FiltersBar";
-import { CategoryFilter } from "@/components/CategoryFilter";
-import { ProductTable } from "@/components/ProductTable";
-import { ProductDrawer } from "@/components/ProductDrawer";
-import { SearchBar } from "@/components/SearchBar";
 import { motion } from "framer-motion";
 import Link from "next/link";
+import { CategoryFilter } from "@/components/CategoryFilter";
+import { FiltersBar } from "@/components/FiltersBar";
+import { ProductDrawer } from "@/components/ProductDrawer";
+import { ProductTable } from "@/components/ProductTable";
+import { SearchBar } from "@/components/SearchBar";
+import { StatsBar } from "@/components/StatsBar";
 
 export default function DashboardPage() {
   return (
     <div className="relative min-h-screen">
-      {/* Header — clean & minimal */}
       <header className="sticky top-0 z-30 border-b border-white/[0.06] bg-[#0f1117]/80 backdrop-blur-xl">
-        <div className="max-w-[1440px] mx-auto px-6 py-4">
+        <div className="mx-auto max-w-[1440px] px-6 py-4">
           <div className="flex items-center justify-between gap-4">
-            {/* Logo + Title */}
             <div className="flex items-center gap-3">
               <motion.div
                 initial={{ rotate: -10, scale: 0.9 }}
                 animate={{ rotate: 0, scale: 1 }}
                 transition={{ type: "spring", stiffness: 200 }}
-                className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold text-sm shadow-lg shadow-blue-500/25"
+                className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-sm font-bold text-white shadow-lg shadow-blue-500/25"
               >
                 AI
               </motion.div>
               <div>
-                <h1 className="text-base font-semibold text-white tracking-tight">
+                <h1 className="text-base font-semibold tracking-tight text-white">
                   Amazon Sales Intelligence
                 </h1>
-                <p className="text-[11px] text-slate-600 flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse-dot" />
+                <p className="flex items-center gap-1.5 text-[11px] text-slate-600">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse-dot" />
                   BSR Analytics Platform
                 </p>
               </div>
             </div>
 
-            {/* Right side — search + history */}
             <div className="flex items-center gap-3">
-              <div className="w-72 hidden lg:block">
+              <div className="hidden w-72 lg:block">
                 <SearchBar />
               </div>
               <Link
                 href="/history"
-                className="text-xs text-purple-400 hover:text-purple-300 transition-colors px-3 py-2 rounded-xl bg-purple-500/10 border border-purple-500/20 hover:border-purple-500/30 hidden md:flex items-center gap-1.5 font-medium"
+                className="hidden items-center gap-1.5 rounded-xl border border-purple-500/20 bg-purple-500/10 px-3 py-2 text-xs font-medium text-purple-400 transition-colors hover:border-purple-500/30 hover:text-purple-300 md:flex"
               >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
                   <circle cx="12" cy="12" r="10" />
                   <polyline points="12 6 12 12 16 14" />
                 </svg>
@@ -57,17 +63,13 @@ export default function DashboardPage() {
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="max-w-[1440px] mx-auto px-6 py-6 space-y-6 relative z-10">
-        {/* Mobile search */}
+      <main className="relative z-10 mx-auto max-w-[1440px] space-y-6 px-6 py-6">
         <div className="lg:hidden">
           <SearchBar />
         </div>
 
-        {/* Stats */}
         <StatsBar />
 
-        {/* Sync Controls — now properly placed in the content area */}
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
@@ -76,37 +78,31 @@ export default function DashboardPage() {
           <FiltersBar />
         </motion.div>
 
-        {/* Category Filter */}
         <CategoryFilter />
 
-        {/* Product Leaderboard */}
         <div>
-          <div className="flex items-center justify-between mb-3">
+          <div className="mb-3 flex items-center justify-between">
             <h2 className="text-sm font-medium text-slate-300">
               Top Products by Estimated Sales
             </h2>
             <p className="text-[11px] text-slate-600">
-              Click any row for details
+              Hover a product to view Amazon or open the graph popup
             </p>
           </div>
           <ProductTable />
         </div>
       </main>
 
-      {/* Product Detail Drawer */}
       <ProductDrawer />
 
-      {/* Footer */}
-      <footer className="border-t border-white/[0.04] mt-12 relative z-10">
-        <div className="max-w-[1440px] mx-auto px-6 py-6">
+      <footer className="relative z-10 mt-12 border-t border-white/[0.04]">
+        <div className="mx-auto max-w-[1440px] px-6 py-6">
           <div className="flex items-center justify-between text-[11px] text-slate-700">
             <p>
-              Amazon Sales Intelligence Platform · BSR estimation uses
+              Amazon Sales Intelligence Platform - BSR estimation uses
               category-calibrated logarithmic interpolation
             </p>
-            <p>
-              Accuracy: 70-85% on stable products · Data refreshes hourly
-            </p>
+            <p>Accuracy: 70-85% on stable products - Data refreshes hourly</p>
           </div>
         </div>
       </footer>

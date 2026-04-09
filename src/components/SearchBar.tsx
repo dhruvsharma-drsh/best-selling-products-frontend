@@ -1,12 +1,13 @@
 "use client";
 
 import { useAppStore } from "@/lib/store";
-import { useRef, useEffect, useState } from "react";
+import { useRef, useEffect, useState, useId } from "react";
 
 export function SearchBar() {
   const { searchQuery, setSearchQuery } = useAppStore();
   const [localValue, setLocalValue] = useState(searchQuery);
   const debounceRef = useRef<NodeJS.Timeout | undefined>(undefined);
+  const inputId = useId();
 
   useEffect(() => {
     debounceRef.current = setTimeout(() => {
@@ -21,6 +22,9 @@ export function SearchBar() {
         🔍
       </span>
       <input
+        id={inputId}
+        name="productSearch"
+        aria-label="Search products"
         type="text"
         value={localValue}
         onChange={(e) => setLocalValue(e.target.value)}

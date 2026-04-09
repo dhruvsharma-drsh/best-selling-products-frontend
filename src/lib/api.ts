@@ -26,6 +26,9 @@ export interface Product {
   bsrCategory: number;
   estimatedMonthlySales?: number;
   estimatedMonthlyRevenue?: number;
+  stabilityScore?: number | null;
+  peakBsr?: number | null;
+  avgBsr?: number | null;
   priceLocal?: number;
   priceUsd?: number;
   priceCurrency?: { code: string; symbol: string; locale: string };

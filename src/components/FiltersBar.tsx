@@ -220,6 +220,7 @@ export function FiltersBar() {
     const interval = setInterval(() => {
       queryClient.invalidateQueries({ queryKey: ["products-top"] });
       queryClient.invalidateQueries({ queryKey: ["stats"] });
+      queryClient.invalidateQueries({ queryKey: ["product-detail"] });
 
       setPollCount((count) => {
         const nextCount = count + 1;
@@ -295,6 +296,7 @@ export function FiltersBar() {
     resetSyncProgressState();
     queryClient.invalidateQueries({ queryKey: ["products-top"] });
     queryClient.invalidateQueries({ queryKey: ["stats"] });
+    queryClient.invalidateQueries({ queryKey: ["product-detail"] });
 
     const completionSummary =
       failedJobs > 0 || cancelledJobs > 0
@@ -338,6 +340,7 @@ export function FiltersBar() {
       }
       queryClient.invalidateQueries({ queryKey: ["products-top"] });
       queryClient.invalidateQueries({ queryKey: ["stats"] });
+      queryClient.invalidateQueries({ queryKey: ["product-detail"] });
       setTimeout(() => setSyncMessage(null), 5000);
     } catch (error) {
       setSyncMessage(formatSyncError(error, "Failed to stop sync."));
@@ -455,6 +458,9 @@ export function FiltersBar() {
               </span>
             </div>
             <select
+              id="country"
+              name="country"
+              aria-label="Select country"
               value={country}
               onChange={(e) => setCountry(e.target.value)}
               disabled={controlsDisabled}
@@ -490,6 +496,9 @@ export function FiltersBar() {
             </div>
             <div className="flex items-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.04] px-2 py-1.5">
               <select
+                id="global-scope"
+                name="globalScope"
+                aria-label="Select sync-all scope"
                 value={globalScope}
                 onChange={(e) => setGlobalScope(e.target.value as "all" | "selected")}
                 disabled={controlsDisabled}
@@ -540,6 +549,9 @@ export function FiltersBar() {
               </span>
             </div>
             <select
+              id="product-limit"
+              name="productLimit"
+              aria-label="Select product limit"
               value={productLimit}
               onChange={(e) => setProductLimit(Number(e.target.value))}
               disabled={controlsDisabled}
@@ -565,6 +577,9 @@ export function FiltersBar() {
               <line x1="3" y1="10" x2="21" y2="10" />
             </svg>
             <input
+              id="start-date"
+              name="startDate"
+              aria-label="Start date"
               type="date"
               value={localStart}
               onChange={(e) => setLocalStart(e.target.value)}
@@ -573,6 +588,9 @@ export function FiltersBar() {
             />
             <span className="text-slate-600 px-0.5">→</span>
             <input
+              id="end-date"
+              name="endDate"
+              aria-label="End date"
               type="date"
               value={localEnd}
               onChange={(e) => setLocalEnd(e.target.value)}

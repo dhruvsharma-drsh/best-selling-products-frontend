@@ -32,7 +32,6 @@ export default function HistoryPage() {
     data: snapshots = [],
     isLoading: snapshotsLoading,
     isError: snapshotsError,
-    error: snapshotsErrorObj,
     refetch: refetchSnapshots,
   } = useQuery({
     queryKey: ["archive-snapshots", category],
@@ -141,6 +140,9 @@ export default function HistoryPage() {
               {/* Search */}
               <div className="relative w-56 hidden lg:block">
                 <input
+                  id="history-search"
+                  name="historySearch"
+                  aria-label="Search archived products"
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
@@ -154,6 +156,9 @@ export default function HistoryPage() {
 
               {/* Category Filter */}
               <select
+                id="history-category"
+                name="historyCategory"
+                aria-label="Filter archive by category"
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
                 className="bg-white/[0.04] border border-white/[0.08] rounded-lg px-3 py-1.5 text-sm text-slate-400 focus:border-purple-500/40 focus:outline-none transition-colors appearance-none cursor-pointer"
